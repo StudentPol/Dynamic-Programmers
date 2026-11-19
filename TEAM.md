@@ -2,7 +2,7 @@
 
 **Course:** _[fill your course code and name]_
 
-**Semester:** Semester _[1|2]_, _[year]_
+**Semester:** Semester 2, 2020
 
 **Instructor:** _[name of your instructor]_
 
