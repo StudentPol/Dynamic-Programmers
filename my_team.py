@@ -206,22 +206,32 @@ class OffensiveReflexAgent(ReflexCaptureAgent):
   but it is by no means the best or only way to build an offensive agent.
   """
 
-    # Change: decide if it is time to go home with A*, if you are carrying food, if a ghost is close, or if time is running out
     def choose_action(self, game_state):
         my_state = game_state.get_agent_state(self.index)
         my_pos = my_state.get_position()
         carrying = my_state.num_carrying
+        food_left = len(self.get_food(game_state).as_list())
 
         if carrying > 0:
             dist_home = min([self.get_maze_distance(my_pos, b) for b in self.boundary])
             ghosts = self.get_dangerous_ghosts(game_state)
-            ghost_close = len(ghosts) > 0 and min([self.get_maze_distance(my_pos, g) for g in ghosts]) <= 5
+            ghost_dist = min([self.get_maze_distance(my_pos, g) for g in ghosts]) if ghosts else None
             moves_left = game_state.data.timeleft // 4
 
-            if carrying >= 5 or ghost_close or moves_left <= dist_home + 5:
+            low_time = moves_left <= dist_home + 2
+            immediate_danger = ghost_dist is not None and ghost_dist <= max(2, min(5, carrying))
+            carrying_enough = carrying >= 5 + dist_home // 2
+            if food_left <= 2 or low_time or immediate_danger or carrying_enough:
                 action = self.a_star_first_action(game_state, self.boundary)
                 if action is not None:
                     return action
+
+        if food_left <= 2:
+            actions = game_state.get_legal_actions(self.index)
+            values = [self.evaluate(game_state, action) for action in actions]
+            max_value = max(values)
+            best_actions = [action for action, value in zip(actions, values) if value == max_value]
+            return random.choice(best_actions)
 
         return ReflexCaptureAgent.choose_action(self, game_state)
 
